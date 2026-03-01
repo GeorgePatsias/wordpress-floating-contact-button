@@ -1,0 +1,217 @@
+.fcb-container {
+    position: fixed;
+    z-index: 999999;
+    bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.fcb-container.fcb-position-bottom-right {
+    right: 30px;
+}
+
+.fcb-container.fcb-position-bottom-left {
+    left: 30px;
+}
+
+/* Base styling overrides for size classes */
+.fcb-container.fcb-size-sm .fcb-main-button {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+}
+
+.fcb-container.fcb-size-sm .fcb-link-item {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+}
+
+.fcb-container.fcb-size-md .fcb-main-button {
+    width: 65px;
+    height: 65px;
+    font-size: 30px;
+}
+
+.fcb-container.fcb-size-md .fcb-link-item {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+}
+
+.fcb-container.fcb-size-lg .fcb-main-button {
+    width: 80px;
+    height: 80px;
+    font-size: 38px;
+}
+
+.fcb-container.fcb-size-lg .fcb-link-item {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+}
+
+/* Allow inline styles to override specific rules for Custom sizing */
+.fcb-container.fcb-size-custom .fcb-main-button {
+    width: 100%;
+    height: 100%;
+    font-size: inherit;
+}
+
+.fcb-container.fcb-size-custom .fcb-link-item {
+    width: 100%;
+    height: 100%;
+    font-size: inherit;
+}
+
+
+/* Visibility Classes */
+@media (min-width: 1025px) {
+    .fcb-container.fcb-hide-desktop {
+        display: none !important;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .fcb-container.fcb-hide-tablet {
+        display: none !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .fcb-container.fcb-hide-mobile {
+        display: none !important;
+    }
+}
+
+/* Animations and Links Container */
+.fcb-links-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.fcb-links-container.fcb-active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.fcb-link-item {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fcb-link-item:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+    color: white !important;
+}
+
+.fcb-tooltip {
+    position: absolute;
+    right: calc(100% + 15px);
+    background: #333;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    font-family: sans-serif;
+    font-weight: 500;
+}
+
+.fcb-position-bottom-left .fcb-tooltip {
+    right: auto;
+    left: calc(100% + 15px);
+}
+
+.fcb-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent transparent #333;
+    left: 100%;
+}
+
+.fcb-position-bottom-left .fcb-tooltip::after {
+    left: auto;
+    right: 100%;
+    border-color: transparent #333 transparent transparent;
+}
+
+.fcb-link-item:hover .fcb-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.fcb-main-button {
+    border-radius: 50%;
+    border: none;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    outline: none;
+    padding: 0;
+}
+
+.fcb-main-button:hover {
+    transform: scale(1.05);
+}
+
+.fcb-main-button i {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    position: absolute;
+}
+
+.fcb-main-button.fcb-open i.fa-times {
+    display: block !important;
+    transform: rotate(90deg);
+}
+
+.fcb-main-button.fcb-open i:not(.fa-times) {
+    display: none !important;
+}
+
+/* Animations for staggered entry */
+.fcb-links-container.fcb-active .fcb-link-item {
+    animation: fcb-pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    opacity: 0;
+}
+
+@keyframes fcb-pop-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

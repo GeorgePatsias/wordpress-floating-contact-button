@@ -5,6 +5,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    pointer-events: none;
 }
 
 .fcb-container.fcb-position-bottom-right {
@@ -114,6 +115,7 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     position: relative;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    pointer-events: auto;
 }
 
 .fcb-link-item:hover {
@@ -178,6 +180,7 @@
     transition: transform 0.3s ease, background-color 0.3s ease;
     outline: none;
     padding: 0;
+    pointer-events: auto;
 }
 
 .fcb-main-button:hover {

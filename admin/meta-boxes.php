@@ -310,25 +310,25 @@ function fcb_settings_meta_box_cb($post)
                         <div>
                             <label style="display:inline-block; width:50px;">Bottom:</label>
                             <input type="number" name="fcb_offset_bottom" id="fcb_offset_bottom_input"
-                                value="<?php echo esc_attr($offset_bottom); ?>" style="width:70px"
-                                class="fcb-preview-trigger" placeholder="30" />
+                                value="<?php echo esc_attr($offset_bottom); ?>" style="width:100px"
+                                class="fcb-preview-trigger" placeholder="e.g. 30" />
                             &nbsp;&nbsp;
                             <label style="display:inline-block; width:50px;" id="fcb_offset_side_label">Side:</label>
                             <input type="number" name="fcb_offset_side" id="fcb_offset_side_input"
-                                value="<?php echo esc_attr($offset_side); ?>" style="width:70px" class="fcb-preview-trigger"
-                                placeholder="30" />
+                                value="<?php echo esc_attr($offset_side); ?>" style="width:100px"
+                                class="fcb-preview-trigger" placeholder="e.g. 30" />
                         </div>
                         <div style="color: #666; font-size: 12px; font-style: italic; margin-bottom: 5px;">Overrides:</div>
                         <div>
                             <label style="display:inline-block; width:50px;">Top:</label>
                             <input type="number" name="fcb_offset_top" id="fcb_offset_top_input"
-                                value="<?php echo esc_attr($offset_top); ?>" style="width:70px" class="fcb-preview-trigger"
+                                value="<?php echo esc_attr($offset_top); ?>" style="width:100px" class="fcb-preview-trigger"
                                 placeholder="e.g. 100" />
                             &nbsp;&nbsp;
                             <label style="display:inline-block; width:50px;">Left:</label>
                             <input type="number" name="fcb_offset_left" id="fcb_offset_left_input"
-                                value="<?php echo esc_attr($offset_left); ?>" style="width:70px" class="fcb-preview-trigger"
-                                placeholder="e.g. 50" />
+                                value="<?php echo esc_attr($offset_left); ?>" style="width:100px"
+                                class="fcb-preview-trigger" placeholder="e.g. 50" />
                         </div>
                     </div>
                 </div>
@@ -402,11 +402,11 @@ function fcb_settings_meta_box_cb($post)
 
     <!-- Template for new link row -->
     <script type="text/template" id="fcb-link-template">
-                <?php
-                $empty_link = array('text' => '', 'icon' => 'fas fa-link', 'color' => '#333333', 'url' => '');
-                fcb_render_metabox_link_row('{{INDEX}}', $empty_link);
-                ?>
-            </script>
+                                    <?php
+                                    $empty_link = array('text' => '', 'icon' => 'fas fa-link', 'color' => '#333333', 'url' => '');
+                                    fcb_render_metabox_link_row('{{INDEX}}', $empty_link);
+                                    ?>
+                                </script>
 
     <script>
         jQuery(document).ready(function ($) {
@@ -599,7 +599,7 @@ function fcb_render_metabox_link_row($index, $link)
                 value="<?php echo esc_attr($link['url']); ?>" class="regular-text fcb-preview-trigger"
                 placeholder="https://..." style="width: 100%;" />
         </div>
-        <a href="#" class="fcb-remove-link">Dismiss</a>
+        <a href="#" class="fcb-remove-link">Delete</a>
     </div>
     <?php
 }

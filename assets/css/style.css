@@ -130,7 +130,7 @@
     background: #333;
     color: white;
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 35px;
     font-size: 14px;
     white-space: nowrap;
     opacity: 0;
@@ -164,6 +164,12 @@
 }
 
 .fcb-link-item:hover .fcb-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Always-show tooltip */
+.fcb-link-item.fcb-tooltip-always .fcb-tooltip {
     opacity: 1;
     visibility: visible;
 }
@@ -216,5 +222,83 @@
     100% {
         opacity: 1;
         transform: scale(1) translateY(0);
+    }
+}
+
+/* Popup Overlay */
+.fcb-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.fcb-popup-overlay.fcb-popup-visible {
+    opacity: 1;
+}
+
+.fcb-popup-content {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 30px;
+    position: relative;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.fcb-popup-overlay.fcb-popup-visible .fcb-popup-content {
+    transform: translateY(0) scale(1);
+}
+
+.fcb-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #666;
+    padding: 0 4px;
+    transition: color 0.2s ease;
+    z-index: 1;
+}
+
+.fcb-popup-close:hover {
+    color: #333;
+}
+
+.fcb-popup-body {
+    margin-top: 10px;
+}
+
+/* Popup link-item button reset (so it looks like the <a> items) */
+button.fcb-link-item {
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+@media (max-width: 480px) {
+    .fcb-popup-content {
+        padding: 20px 15px;
+        border-radius: 8px;
     }
 }

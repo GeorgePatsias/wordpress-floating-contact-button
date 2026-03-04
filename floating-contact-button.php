@@ -118,6 +118,7 @@ function fcb_render_buttons()
             $size = isset($settings['size']) ? $settings['size'] : 'md';
             $custom_size_main = isset($settings['custom_size_main']) ? intval($settings['custom_size_main']) : 65;
             $custom_size_links = isset($settings['custom_size_links']) ? intval($settings['custom_size_links']) : 50;
+            $gap = isset($settings['gap']) ? intval($settings['gap']) : 15;
 
             $offset_bottom = isset($settings['offset_bottom']) && $settings['offset_bottom'] !== '' ? intval($settings['offset_bottom']) : 30;
             $offset_side = isset($settings['offset_side']) && $settings['offset_side'] !== '' ? intval($settings['offset_side']) : 30;
@@ -177,22 +178,49 @@ function fcb_render_buttons()
                 $link_item_style_base = 'width: ' . esc_attr($custom_size_links) . 'px; height: ' . esc_attr($custom_size_links) . 'px; font-size: ' . esc_attr($custom_size_links * 0.45) . 'px;';
             }
 
+            // Collect popup links for rendering overlays after the container
+            $popup_links = array();
+            $popup_counter = 0;
+
             // It's possible to have multiple buttons in same position overlapping, user manages it.
             ?>
             <div id="fcb-button-<?php echo esc_attr($post_id); ?>" class="<?php echo esc_attr($container_class_str); ?>"
                 style="<?php echo esc_attr($container_style); ?>">
-                <div class="fcb-links-container">
+                <div class="fcb-links-container"
+                    style="gap: <?php echo esc_attr($gap); ?>px; margin-bottom: <?php echo esc_attr($gap); ?>px;">
                     <?php
                     if (!empty($links) && is_array($links)) {
                         foreach ($links as $link) {
-                            if (!empty($link['url'])) {
-                                $icon = !empty($link['icon']) ? trim($link['icon']) : 'fas fa-link';
-                                $color = !empty($link['color']) ? $link['color'] : '#333333';
-                                $text = !empty($link['text']) ? $link['text'] : '';
+                            $link_type = isset($link['type']) ? $link['type'] : 'link';
+                            $icon = !empty($link['icon']) ? trim($link['icon']) : 'fas fa-link';
+                            $color = !empty($link['color']) ? $link['color'] : '#333333';
+                            $text = !empty($link['text']) ? $link['text'] : '';
+                            $tooltip_always = isset($link['tooltip_always']) && $link['tooltip_always'] === 'yes';
+                            $link_classes = 'fcb-link-item' . ($tooltip_always ? ' fcb-tooltip-always' : '');
+                            $link_style = $link_item_style_base . ' background-color: ' . esc_attr($color) . ';';
 
-                                $link_style = $link_item_style_base . ' background-color: ' . esc_attr($color) . ';';
+                            if ($link_type === 'popup' && !empty($link['shortcode'])) {
+                                // Popup type: render as button with data attribute
+                                $popup_id = 'fcb-popup-' . $post_id . '-' . $popup_counter;
+                                $popup_links[] = array(
+                                    'id' => $popup_id,
+                                    'shortcode' => $link['shortcode'],
+                                );
+                                $popup_counter++;
                                 ?>
-                                <a href="<?php echo esc_url($link['url']); ?>" target="_blank" class="fcb-link-item"
+                                <button type="button" data-fcb-popup="<?php echo esc_attr($popup_id); ?>"
+                                    class="<?php echo esc_attr($link_classes); ?>" style="<?php echo esc_attr($link_style); ?>"
+                                    title="<?php echo esc_attr($text); ?>">
+                                    <i class="<?php echo esc_attr($icon); ?>"></i>
+                                    <?php if ($text): ?>
+                                        <span class="fcb-tooltip"><?php echo esc_html($text); ?></span>
+                                    <?php endif; ?>
+                                </button>
+                                <?php
+                            } elseif (!empty($link['url'])) {
+                                // Regular link type
+                                ?>
+                                <a href="<?php echo esc_url($link['url']); ?>" target="_blank" class="<?php echo esc_attr($link_classes); ?>"
                                     style="<?php echo esc_attr($link_style); ?>" title="<?php echo esc_attr($text); ?>">
                                     <i class="<?php echo esc_attr($icon); ?>"></i>
                                     <?php if ($text): ?>
@@ -210,7 +238,23 @@ function fcb_render_buttons()
                     <i class="fas fa-times fcb-close-icon" style="display:none;"></i>
                 </button>
             </div>
+
             <?php
+            // Render popup overlays outside the fixed container
+            if (!empty($popup_links)) {
+                foreach ($popup_links as $popup) {
+                    ?>
+                    <div id="<?php echo esc_attr($popup['id']); ?>" class="fcb-popup-overlay" style="display:none;">
+                        <div class="fcb-popup-content">
+                            <button type="button" class="fcb-popup-close" aria-label="Close popup">&times;</button>
+                            <div class="fcb-popup-body">
+                                <?php echo do_shortcode($popup['shortcode']); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php
+                }
+            }
         }
         wp_reset_postdata();
     }

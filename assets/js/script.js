@@ -58,4 +58,52 @@ jQuery(document).ready(function ($) {
             });
         }
     });
+
+    // --- Popup Functionality ---
+
+    // Open popup when clicking a popup-type link item
+    $(document).on('click', '[data-fcb-popup]', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var popupId = $(this).data('fcb-popup');
+        var $overlay = $('#' + popupId);
+        if ($overlay.length) {
+            $overlay.css('display', 'flex');
+            // Trigger reflow for animation
+            $overlay[0].offsetHeight;
+            $overlay.addClass('fcb-popup-visible');
+            $('body').css('overflow', 'hidden');
+        }
+    });
+
+    // Close popup on close button click
+    $(document).on('click', '.fcb-popup-close', function (e) {
+        e.preventDefault();
+        fcbClosePopup($(this).closest('.fcb-popup-overlay'));
+    });
+
+    // Close popup on overlay backdrop click
+    $(document).on('click', '.fcb-popup-overlay', function (e) {
+        if ($(e.target).hasClass('fcb-popup-overlay')) {
+            fcbClosePopup($(this));
+        }
+    });
+
+    // Close popup on Escape key
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape') {
+            var $visible = $('.fcb-popup-overlay.fcb-popup-visible');
+            if ($visible.length) {
+                fcbClosePopup($visible);
+            }
+        }
+    });
+
+    function fcbClosePopup($overlay) {
+        $overlay.removeClass('fcb-popup-visible');
+        setTimeout(function () {
+            $overlay.css('display', 'none');
+            $('body').css('overflow', '');
+        }, 300); // Match CSS transition duration
+    }
 });

@@ -13,6 +13,13 @@ if (!defined('ABSPATH')) {
 define('FCB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FCB_PLUGIN_URL', plugin_dir_url(__FILE__));
 
+// Load plugin text domain for translations
+add_action('plugins_loaded', 'fcb_load_textdomain');
+function fcb_load_textdomain()
+{
+    load_plugin_textdomain('fcb', false, dirname(plugin_basename(__FILE__)) . '/languages');
+}
+
 // Include metaboxes logic
 if (is_admin()) {
     require_once FCB_PLUGIN_DIR . 'admin/meta-boxes.php';
@@ -63,6 +70,14 @@ function fcb_register_post_type()
     register_post_type('fcb_button', $args);
 }
 
+// Make fcb_button translatable by Polylang
+add_filter('pll_get_post_types', 'fcb_add_polylang_post_type', 10, 2);
+function fcb_add_polylang_post_type($post_types, $is_settings)
+{
+    $post_types['fcb_button'] = 'fcb_button';
+    return $post_types;
+}
+
 // Enqueue scripts and styles
 add_action('wp_enqueue_scripts', 'fcb_enqueue_assets');
 function fcb_enqueue_assets()
@@ -80,6 +95,7 @@ function fcb_render_buttons()
         'post_type' => 'fcb_button',
         'posts_per_page' => -1,
         'post_status' => 'publish',
+        'suppress_filters' => false, // Allow Polylang to filter by current language
     );
     $buttons = new WP_Query($args);
 

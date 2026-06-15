@@ -62,10 +62,21 @@ jQuery(document).ready(function ($) {
     // --- Popup Functionality ---
 
     // Open popup when clicking a popup-type link item
-    $(document).on('click', '[data-fcb-popup]', function (e) {
+    $(document).on('click', '[data-fcb-popup], a[href*="#fcb-popup-"]', function (e) {
+        var href = $(this).attr('href');
+        // If it's a link and doesn't contain #fcb-popup-, let it be
+        if (!$(this).data('fcb-popup') && (!href || href.indexOf('#fcb-popup-') === -1)) {
+            return;
+        }
+
         e.preventDefault();
-        e.stopPropagation();
+        e.stopImmediatePropagation();
+
         var popupId = $(this).data('fcb-popup');
+        if (!popupId && href) {
+            popupId = href.split('#')[1];
+        }
+
         var $overlay = $('#' + popupId);
         if ($overlay.length) {
             $overlay.css('display', 'flex');
@@ -75,6 +86,20 @@ jQuery(document).ready(function ($) {
             $('body').css('overflow', 'hidden');
         }
     });
+
+    // Automatically open popup if URL has the hash
+    if (window.location.hash && window.location.hash.indexOf('#fcb-popup-') === 0) {
+        var hashId = window.location.hash.substring(1);
+        var $overlayOnLoad = $('#' + hashId);
+        if ($overlayOnLoad.length) {
+            setTimeout(function() {
+                $overlayOnLoad.css('display', 'flex');
+                $overlayOnLoad[0].offsetHeight;
+                $overlayOnLoad.addClass('fcb-popup-visible');
+                $('body').css('overflow', 'hidden');
+            }, 100);
+        }
+    }
 
     // Close popup on close button click
     $(document).on('click', '.fcb-popup-close', function (e) {

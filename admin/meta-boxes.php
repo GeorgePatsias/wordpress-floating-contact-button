@@ -24,7 +24,7 @@ function fcb_save_meta_box_data($post_id)
     if (!isset($_POST['fcb_meta_box_nonce'])) {
         return;
     }
-    if (!wp_verify_nonce($_POST['fcb_meta_box_nonce'], 'fcb_save_meta_box_data')) {
+    if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['fcb_meta_box_nonce'])), 'fcb_save_meta_box_data')) {
         return;
     }
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
@@ -34,24 +34,43 @@ function fcb_save_meta_box_data($post_id)
         return;
     }
 
+    // Only handle our own post type.
+    if (get_post_type($post_id) !== 'fcb_button') {
+        return;
+    }
+
     $settings = array();
 
     // Main button settings
-    $settings['main_icon'] = isset($_POST['fcb_main_icon']) ? sanitize_text_field($_POST['fcb_main_icon']) : 'fas fa-comment-dots';
-    $settings['main_color'] = isset($_POST['fcb_main_color']) ? sanitize_hex_color($_POST['fcb_main_color']) : '#007bff';
-    $settings['position'] = isset($_POST['fcb_position']) ? sanitize_text_field($_POST['fcb_position']) : 'bottom-right';
+    $settings['main_icon'] = isset($_POST['fcb_main_icon']) ? sanitize_text_field(wp_unslash($_POST['fcb_main_icon'])) : 'fas fa-comment-dots';
+    $settings['main_color'] = isset($_POST['fcb_main_color']) ? sanitize_hex_color(wp_unslash($_POST['fcb_main_color'])) : '#007bff';
 
-    // Sizing and positioning
-    $settings['size'] = isset($_POST['fcb_size']) ? sanitize_text_field($_POST['fcb_size']) : 'md';
-    $settings['custom_size_main'] = isset($_POST['fcb_custom_size_main']) ? intval($_POST['fcb_custom_size_main']) : 65;
-    $settings['custom_size_links'] = isset($_POST['fcb_custom_size_links']) ? intval($_POST['fcb_custom_size_links']) : 50;
-    $settings['gap'] = isset($_POST['fcb_gap']) ? intval($_POST['fcb_gap']) : 15;
+    // Whitelist position to known values.
+    $position = isset($_POST['fcb_position']) ? sanitize_text_field(wp_unslash($_POST['fcb_position'])) : 'bottom-right';
+    $settings['position'] = in_array($position, array('bottom-right', 'bottom-left'), true) ? $position : 'bottom-right';
 
-    $settings['offset_bottom'] = isset($_POST['fcb_offset_bottom']) ? $_POST['fcb_offset_bottom'] : '';
-    $settings['offset_side'] = isset($_POST['fcb_offset_side']) ? $_POST['fcb_offset_side'] : '';
-    $settings['offset_top'] = isset($_POST['fcb_offset_top']) ? $_POST['fcb_offset_top'] : '';
-    $settings['offset_left'] = isset($_POST['fcb_offset_left']) ? $_POST['fcb_offset_left'] : '';
-    $settings['custom_css_class'] = isset($_POST['fcb_custom_css_class']) ? sanitize_html_class($_POST['fcb_custom_css_class']) : '';
+    // Whitelist size to known values.
+    $size = isset($_POST['fcb_size']) ? sanitize_text_field(wp_unslash($_POST['fcb_size'])) : 'md';
+    $settings['size'] = in_array($size, array('sm', 'md', 'lg', 'custom'), true) ? $size : 'md';
+
+    $settings['custom_size_main'] = isset($_POST['fcb_custom_size_main']) ? absint($_POST['fcb_custom_size_main']) : 65;
+    $settings['custom_size_links'] = isset($_POST['fcb_custom_size_links']) ? absint($_POST['fcb_custom_size_links']) : 50;
+    $settings['gap'] = isset($_POST['fcb_gap']) ? absint($_POST['fcb_gap']) : 15;
+
+    // Offsets: store an integer, or '' when left blank. Never store raw request data.
+    $settings['offset_bottom'] = (isset($_POST['fcb_offset_bottom']) && $_POST['fcb_offset_bottom'] !== '') ? intval($_POST['fcb_offset_bottom']) : '';
+    $settings['offset_side'] = (isset($_POST['fcb_offset_side']) && $_POST['fcb_offset_side'] !== '') ? intval($_POST['fcb_offset_side']) : '';
+    $settings['offset_top'] = (isset($_POST['fcb_offset_top']) && $_POST['fcb_offset_top'] !== '') ? intval($_POST['fcb_offset_top']) : '';
+    $settings['offset_left'] = (isset($_POST['fcb_offset_left']) && $_POST['fcb_offset_left'] !== '') ? intval($_POST['fcb_offset_left']) : '';
+
+    // Custom CSS class: support multiple space-separated classes (sanitize each individually).
+    $custom_css_class = '';
+    if (isset($_POST['fcb_custom_css_class'])) {
+        $raw_classes = sanitize_text_field(wp_unslash($_POST['fcb_custom_css_class']));
+        $class_parts = array_filter(array_map('sanitize_html_class', preg_split('/\s+/', $raw_classes)));
+        $custom_css_class = implode(' ', $class_parts);
+    }
+    $settings['custom_css_class'] = $custom_css_class;
 
     // Visibility
     $settings['hide_desktop'] = isset($_POST['fcb_hide_desktop']) ? 'yes' : 'no';
@@ -61,18 +80,28 @@ function fcb_save_meta_box_data($post_id)
     // Links (Order will be preserved via index logic because jQuery sortable submits input array in DOM order)
     $links = array();
     if (isset($_POST['fcb_links']) && is_array($_POST['fcb_links'])) {
+        // Unslash the whole array first (WP adds slashes to superglobals).
+        $raw_links = wp_unslash($_POST['fcb_links']);
         // Renumber array implicitly by pushing
-        foreach ($_POST['fcb_links'] as $link) {
+        foreach ($raw_links as $link) {
+            if (!is_array($link)) {
+                continue;
+            }
             $link_type = isset($link['type']) ? sanitize_text_field($link['type']) : 'link';
+            $link_type = in_array($link_type, array('link', 'popup'), true) ? $link_type : 'link';
+
+            $url = isset($link['url']) ? esc_url_raw($link['url']) : '';
+            $shortcode = isset($link['shortcode']) ? $link['shortcode'] : '';
+
             // Accept link if it has a URL (for type=link) or shortcode (for type=popup)
-            if (!empty($link['url']) || ($link_type === 'popup' && !empty($link['shortcode']))) {
+            if (($link_type === 'link' && $url !== '') || ($link_type === 'popup' && !empty($shortcode))) {
                 $links[] = array(
                     'type' => $link_type,
-                    'url' => esc_url_raw($link['url']),
-                    'icon' => sanitize_text_field($link['icon']),
-                    'color' => sanitize_hex_color($link['color']),
-                    'text' => sanitize_text_field($link['text']),
-                    'shortcode' => isset($link['shortcode']) ? wp_kses_post($link['shortcode']) : '',
+                    'url' => $url,
+                    'icon' => isset($link['icon']) ? sanitize_text_field($link['icon']) : '',
+                    'color' => isset($link['color']) ? sanitize_hex_color($link['color']) : '',
+                    'text' => isset($link['text']) ? sanitize_text_field($link['text']) : '',
+                    'shortcode' => $link_type === 'popup' ? wp_kses_post($shortcode) : '',
                     'tooltip_always' => isset($link['tooltip_always']) ? 'yes' : 'no',
                 );
             }
@@ -117,7 +146,7 @@ function fcb_settings_meta_box_cb($post)
 
     // Enqueue admin scripts/styles
     wp_enqueue_style('wp-color-picker');
-    wp_enqueue_style('fcb-font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+    wp_enqueue_style('fcb-font-awesome', FCB_PLUGIN_URL . 'assets/vendor/fontawesome/css/all.min.css', array(), '6.4.0');
     wp_enqueue_style('fcb-frontend-style', FCB_PLUGIN_URL . 'assets/css/style.css'); // Load frontend CSS for preview
     wp_enqueue_script('wp-color-picker');
     wp_enqueue_script('jquery-ui-sortable');
@@ -608,26 +637,33 @@ function fcb_settings_meta_box_cb($post)
 
 function fcb_render_metabox_link_row($index, $link)
 {
+    // Normalize all fields to strings to avoid PHP 8.1+ null-to-string deprecations
+    // (e.g. sanitize_hex_color() can store null, and legacy rows may miss keys).
     $link_type = isset($link['type']) ? $link['type'] : 'link';
     $shortcode = isset($link['shortcode']) ? $link['shortcode'] : '';
+    $text = isset($link['text']) ? (string) $link['text'] : '';
+    $icon = isset($link['icon']) ? (string) $link['icon'] : '';
+    $color = isset($link['color']) ? (string) $link['color'] : '';
+    $url = isset($link['url']) ? (string) $link['url'] : '';
+    $tooltip_always = isset($link['tooltip_always']) ? $link['tooltip_always'] : 'no';
     ?>
     <div class="fcb-link-row">
         <div class="fcb-drag-handle" title="Drag to reorder"><i class="fas fa-grip-lines"></i></div>
         <div class="field-group">
             <label>Platform/Text</label>
             <input type="text" name="fcb_links[<?php echo esc_attr($index); ?>][text]"
-                value="<?php echo esc_attr($link['text']); ?>" placeholder="e.g. Facebook" class="fcb-preview-trigger" />
+                value="<?php echo esc_attr($text); ?>" placeholder="e.g. Facebook" class="fcb-preview-trigger" />
         </div>
         <div class="field-group">
             <label>Icon Class</label>
             <input type="text" name="fcb_links[<?php echo esc_attr($index); ?>][icon]"
-                value="<?php echo esc_attr($link['icon']); ?>" placeholder="e.g. fab fa-facebook"
+                value="<?php echo esc_attr($icon); ?>" placeholder="e.g. fab fa-facebook"
                 class="fcb-preview-trigger" />
         </div>
         <div class="field-group">
             <label>Color</label>
             <input type="text" name="fcb_links[<?php echo esc_attr($index); ?>][color]"
-                value="<?php echo esc_attr($link['color']); ?>" class="fcb-color-picker" />
+                value="<?php echo esc_attr($color); ?>" class="fcb-color-picker" />
         </div>
         <div class="field-group">
             <label>Type</label>
@@ -641,7 +677,7 @@ function fcb_render_metabox_link_row($index, $link)
             style="flex-grow: 1; <?php echo $link_type === 'popup' ? 'display:none;' : ''; ?>">
             <label>URL (Required to display)</label>
             <input type="text" name="fcb_links[<?php echo esc_attr($index); ?>][url]"
-                value="<?php echo esc_attr($link['url']); ?>" class="regular-text fcb-preview-trigger"
+                value="<?php echo esc_attr($url); ?>" class="regular-text fcb-preview-trigger"
                 placeholder="https://..." style="width: 100%;" />
         </div>
         <div class="field-group fcb-field-shortcode"
@@ -653,7 +689,7 @@ function fcb_render_metabox_link_row($index, $link)
         </div>
         <div class="field-group" style="display:flex; align-items:center;">
             <label style="margin-right:5px; text-transform:none;">Always Show Tooltip</label>
-            <input type="checkbox" name="fcb_links[<?php echo esc_attr($index); ?>][tooltip_always]" value="yes" <?php checked(isset($link['tooltip_always']) ? $link['tooltip_always'] : 'no', 'yes'); ?>
+            <input type="checkbox" name="fcb_links[<?php echo esc_attr($index); ?>][tooltip_always]" value="yes" <?php checked($tooltip_always, 'yes'); ?>
                 class="fcb-preview-trigger" />
         </div>
         <a href="#" class="fcb-remove-link">Delete</a>

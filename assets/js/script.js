@@ -16,6 +16,7 @@ jQuery(document).ready(function ($) {
 
             mainButton.toggleClass('fcb-open');
             linksContainer.toggleClass('fcb-active');
+            mainButton.attr('aria-expanded', linksContainer.hasClass('fcb-active') ? 'true' : 'false');
 
             // Handle staggered animation delays
             if (linksContainer.hasClass('fcb-active')) {
@@ -50,6 +51,7 @@ jQuery(document).ready(function ($) {
                 if (linksContainer.hasClass('fcb-active')) {
                     mainButton.removeClass('fcb-open');
                     linksContainer.removeClass('fcb-active');
+                    mainButton.attr('aria-expanded', 'false');
 
                     mainButton.find('.fa-times').fadeOut(150, function () {
                         mainButton.find('i:not(.fa-times)').fadeIn(150);
@@ -60,6 +62,27 @@ jQuery(document).ready(function ($) {
     });
 
     // --- Popup Functionality ---
+
+    // Only ids matching the server-generated pattern are ever used as selectors.
+    // This prevents jQuery selector injection / errors from attacker-controlled URL hashes.
+    function fcbGetPopupOverlay(popupId) {
+        if (!popupId || !/^fcb-popup-[\w-]+$/.test(popupId)) {
+            return $();
+        }
+        var el = document.getElementById(popupId);
+        return el ? $(el) : $();
+    }
+
+    function fcbOpenPopup($overlay) {
+        if (!$overlay.length) {
+            return;
+        }
+        $overlay.css('display', 'flex');
+        // Trigger reflow for animation
+        $overlay[0].offsetHeight;
+        $overlay.addClass('fcb-popup-visible');
+        $('body').css('overflow', 'hidden');
+    }
 
     // Open popup when clicking a popup-type link item
     $(document).on('click', '[data-fcb-popup], a[href*="#fcb-popup-"]', function (e) {
@@ -77,26 +100,16 @@ jQuery(document).ready(function ($) {
             popupId = href.split('#')[1];
         }
 
-        var $overlay = $('#' + popupId);
-        if ($overlay.length) {
-            $overlay.css('display', 'flex');
-            // Trigger reflow for animation
-            $overlay[0].offsetHeight;
-            $overlay.addClass('fcb-popup-visible');
-            $('body').css('overflow', 'hidden');
-        }
+        fcbOpenPopup(fcbGetPopupOverlay(popupId));
     });
 
     // Automatically open popup if URL has the hash
     if (window.location.hash && window.location.hash.indexOf('#fcb-popup-') === 0) {
         var hashId = window.location.hash.substring(1);
-        var $overlayOnLoad = $('#' + hashId);
+        var $overlayOnLoad = fcbGetPopupOverlay(hashId);
         if ($overlayOnLoad.length) {
             setTimeout(function() {
-                $overlayOnLoad.css('display', 'flex');
-                $overlayOnLoad[0].offsetHeight;
-                $overlayOnLoad.addClass('fcb-popup-visible');
-                $('body').css('overflow', 'hidden');
+                fcbOpenPopup($overlayOnLoad);
             }, 100);
         }
     }

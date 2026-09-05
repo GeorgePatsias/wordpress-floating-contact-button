@@ -4,6 +4,13 @@
  * Description: A customizable floating contact button with multiple links (Facebook, WhatsApp, LinkedIn, etc.) using Custom Post Types.
  * Version: 2.0.1
  * Author: George Patsias
+ * Requires at least: 6.0
+ * Tested up to: 7.1
+ * Requires PHP: 7.4
+ * Text Domain: fcb
+ * Domain Path: /languages
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if (!defined('ABSPATH')) {
@@ -82,7 +89,8 @@ function fcb_add_polylang_post_type($post_types, $is_settings)
 add_action('wp_enqueue_scripts', 'fcb_enqueue_assets');
 function fcb_enqueue_assets()
 {
-    wp_enqueue_style('fcb-font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css', array(), '6.4.0');
+    // Self-hosted Font Awesome (no third-party CDN request → faster LCP, fewer connections, GDPR-friendly).
+    wp_enqueue_style('fcb-font-awesome', FCB_PLUGIN_URL . 'assets/vendor/fontawesome/css/all.min.css', array(), '6.4.0');
     wp_enqueue_style('fcb-style', FCB_PLUGIN_URL . 'assets/css/style.css', array(), '2.0.0');
     wp_enqueue_script('fcb-script', FCB_PLUGIN_URL . 'assets/js/script.js', array('jquery'), '2.0.0', true);
 }
@@ -208,10 +216,11 @@ function fcb_render_buttons()
                                 );
                                 $popup_counter++;
                                 ?>
+                                <?php $aria_label = $text !== '' ? $text : __('Open contact popup', 'fcb'); ?>
                                 <button type="button" data-fcb-popup="<?php echo esc_attr($popup_id); ?>"
                                     class="<?php echo esc_attr($link_classes); ?>" style="<?php echo esc_attr($link_style); ?>"
-                                    title="<?php echo esc_attr($text); ?>">
-                                    <i class="<?php echo esc_attr($icon); ?>"></i>
+                                    title="<?php echo esc_attr($text); ?>" aria-label="<?php echo esc_attr($aria_label); ?>">
+                                    <i class="<?php echo esc_attr($icon); ?>" aria-hidden="true"></i>
                                     <?php if ($text): ?>
                                         <span class="fcb-tooltip"><?php echo esc_html($text); ?></span>
                                     <?php endif; ?>
@@ -220,9 +229,11 @@ function fcb_render_buttons()
                             } elseif (!empty($link['url'])) {
                                 // Regular link type
                                 ?>
-                                <a href="<?php echo esc_url($link['url']); ?>" target="_blank" class="<?php echo esc_attr($link_classes); ?>"
-                                    style="<?php echo esc_attr($link_style); ?>" title="<?php echo esc_attr($text); ?>">
-                                    <i class="<?php echo esc_attr($icon); ?>"></i>
+                                <?php $aria_label = $text !== '' ? $text : __('Contact link', 'fcb'); ?>
+                                <a href="<?php echo esc_url($link['url']); ?>" target="_blank" rel="noopener noreferrer" class="<?php echo esc_attr($link_classes); ?>"
+                                    style="<?php echo esc_attr($link_style); ?>" title="<?php echo esc_attr($text); ?>"
+                                    aria-label="<?php echo esc_attr($aria_label); ?>">
+                                    <i class="<?php echo esc_attr($icon); ?>" aria-hidden="true"></i>
                                     <?php if ($text): ?>
                                         <span class="fcb-tooltip"><?php echo esc_html($text); ?></span>
                                     <?php endif; ?>
@@ -233,9 +244,9 @@ function fcb_render_buttons()
                     }
                     ?>
                 </div>
-                <button class="fcb-main-button" style="<?php echo esc_attr($main_btn_style); ?>" aria-label="Toggle contact links">
-                    <i class="<?php echo esc_attr($main_icon); ?>"></i>
-                    <i class="fas fa-times fcb-close-icon" style="display:none;"></i>
+                <button class="fcb-main-button" style="<?php echo esc_attr($main_btn_style); ?>" aria-label="<?php echo esc_attr__('Toggle contact links', 'fcb'); ?>" aria-expanded="false">
+                    <i class="<?php echo esc_attr($main_icon); ?>" aria-hidden="true"></i>
+                    <i class="fas fa-times fcb-close-icon" style="display:none;" aria-hidden="true"></i>
                 </button>
             </div>
 

@@ -27,6 +27,27 @@ function fcb_load_textdomain()
     load_plugin_textdomain('fcb', false, dirname(plugin_basename(__FILE__)) . '/languages');
 }
 
+// Skip the bundled Font Awesome when the theme or another plugin already loads a full Font Awesome 5/6 set.
+// Runs just before the head styles print, so it sees everything enqueued by then, whatever the hook order.
+add_action('wp_print_styles', 'fcb_skip_duplicate_font_awesome', 1);
+function fcb_skip_duplicate_font_awesome()
+{
+    if (is_admin()) {
+        return;
+    }
+    $styles = wp_styles();
+    foreach ($styles->queue as $handle) {
+        if ('fcb-font-awesome' === $handle || empty($styles->registered[$handle]->src)) {
+            continue;
+        }
+        // Only a complete set (all.css / fontawesome-all.css) counts: partial files such as solid-only or v4 lack the brand icons.
+        if (preg_match('#font-?awesome.*/(fontawesome-)?all(\.min)?\.css#i', (string) $styles->registered[$handle]->src)) {
+            wp_dequeue_style('fcb-font-awesome');
+            return;
+        }
+    }
+}
+
 // Include metaboxes logic
 if (is_admin()) {
     require_once FCB_PLUGIN_DIR . 'admin/meta-boxes.php';
